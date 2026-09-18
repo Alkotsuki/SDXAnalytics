@@ -10,6 +10,7 @@ let package = Package(
         .library(name: "SDXAnalytics", targets: ["SDXAnalytics"]),
         .library(name: "SDXAnalyticsFirebase", targets: ["SDXAnalyticsFirebase"]),
         .library(name: "SDXAnalyticsAmplitude", targets: ["SDXAnalyticsAmplitude"]),
+        .library(name: "SDXAnalyticsCrashlytics", targets: ["SDXAnalyticsCrashlytics"]),
     ],
     dependencies: [
         .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "12.17.0"),
@@ -31,12 +32,21 @@ let package = Package(
                 .product(name: "AmplitudeSwift", package: "Amplitude-Swift"),
             ]
         ),
+        .target(
+            name: "SDXAnalyticsCrashlytics",
+            dependencies: [
+                "SDXAnalytics",
+                "SDXAnalyticsFirebase",
+                .product(name: "FirebaseCrashlytics", package: "firebase-ios-sdk"),
+            ]
+        ),
         .testTarget(
             name: "SDXAnalyticsTests",
             dependencies: [
                 "SDXAnalytics",
                 "SDXAnalyticsFirebase",
                 "SDXAnalyticsAmplitude",
+                "SDXAnalyticsCrashlytics",
             ]
         ),
     ]
