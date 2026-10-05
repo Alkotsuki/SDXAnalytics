@@ -1,5 +1,5 @@
 {
-  "originHash" : "c9b8e3169dd9133e5692736eca46237a7fbec1df777f289fcae02d3d51348e05",
+  "originHash" : "2b7cf2964bef9a1fbb8c6fdbf019794884173ab742ed12131fd73228a9d27f91",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/amplitude/Amplitude-Swift.git",
       "state" : {
-        "revision" : "63a8a83dabeb8ef10096034f4763165ef827f76b",
-        "version" : "1.18.7"
+        "revision" : "1707b47e26f0f5856316299efa4404597e676a03",
+        "version" : "1.19.2"
       }
     },
     {
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/amplitude/AmplitudeCore-Swift.git",
       "state" : {
-        "revision" : "bbad108b92f332fdaa76b67bce3f3ae88015ad0b",
-        "version" : "1.4.10"
+        "revision" : "78083c4fbd276735821025aec8601f06ace01bd1",
+        "version" : "1.5.4"
       }
     },
     {
@@ -47,12 +47,21 @@
       }
     },
     {
+      "identity" : "facebook-ios-sdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/facebook/facebook-ios-sdk",
+      "state" : {
+        "revision" : "80d0ee82f6370d1bace1431a80cb80575f98ee90",
+        "version" : "18.1.1"
+      }
+    },
+    {
       "identity" : "firebase-ios-sdk",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/firebase/firebase-ios-sdk",
       "state" : {
-        "revision" : "33a468adfdb75b53f05a37e7c886ca7c962b5c17",
-        "version" : "12.17.0"
+        "revision" : "8c29ca981990a32e626c8617544fa65d22b1834f",
+        "version" : "12.19.2"
       }
     },
     {
@@ -60,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/googleads/google-ads-on-device-conversion-ios-sdk",
       "state" : {
-        "revision" : "dc39082d8881109d35b94b1c122164c0e8d08a55",
-        "version" : "3.6.1"
+        "revision" : "0208e2681ec81f8a9c81084696f60fcce26cb7ee",
+        "version" : "3.7.0"
       }
     },
     {
@@ -69,8 +78,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/google/GoogleAppMeasurement.git",
       "state" : {
-        "revision" : "fceaffa07d22dcd5624d3639fd970351a4a5ad8c",
-        "version" : "12.17.0"
+        "revision" : "b8455dd2ff55cc269fda7a4f9eac6c1e3588c53f",
+        "version" : "12.19.2"
       }
     },
     {
@@ -87,8 +96,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/google/GoogleUtilities.git",
       "state" : {
-        "revision" : "9f183ae842be978784f2963a343682e0c46d8fb3",
-        "version" : "8.1.2"
+        "revision" : "cc31f5ed464b111f877ce8554cbef4455d410d91",
+        "version" : "8.1.4"
       }
     },
     {
