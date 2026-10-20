@@ -14,9 +14,9 @@ let package = Package(
         .library(name: "SDXAnalyticsFacebook", targets: ["SDXAnalyticsFacebook"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "12.19.0"),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "13.0.0"),
+        .package(url: "https://github.com/facebook/facebook-ios-sdk", from: "19.0.0"),
         .package(url: "https://github.com/amplitude/Amplitude-Swift.git", from: "1.19.0"),
-        .package(url: "https://github.com/facebook/facebook-ios-sdk", from: "18.1.0"),
     ],
     targets: [
         .target(name: "SDXAnalytics"),
@@ -25,13 +25,6 @@ let package = Package(
             dependencies: [
                 "SDXAnalytics",
                 .product(name: "FirebaseAnalytics", package: "firebase-ios-sdk"),
-            ]
-        ),
-        .target(
-            name: "SDXAnalyticsAmplitude",
-            dependencies: [
-                "SDXAnalytics",
-                .product(name: "AmplitudeSwift", package: "Amplitude-Swift"),
             ]
         ),
         .target(
@@ -49,14 +42,21 @@ let package = Package(
                 .product(name: "FacebookCore", package: "facebook-ios-sdk"),
             ]
         ),
+        .target(
+            name: "SDXAnalyticsAmplitude",
+            dependencies: [
+                "SDXAnalytics",
+                .product(name: "AmplitudeSwift", package: "Amplitude-Swift"),
+            ]
+        ),
         .testTarget(
             name: "SDXAnalyticsTests",
             dependencies: [
                 "SDXAnalytics",
                 "SDXAnalyticsFirebase",
-                "SDXAnalyticsAmplitude",
                 "SDXAnalyticsCrashlytics",
                 "SDXAnalyticsFacebook",
+                "SDXAnalyticsAmplitude",
             ]
         ),
     ]
