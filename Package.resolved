@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/amplitude/Amplitude-Swift.git",
       "state" : {
-        "revision" : "bee1c6fdaec8f8a0518d9729a98cc7f8b6d48ae3",
-        "version" : "1.19.3"
+        "revision" : "48a4b8635008c41b1f9f51b5c9032d5850746289",
+        "version" : "1.19.4"
       }
     },
     {
@@ -51,7 +51,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/facebook/facebook-ios-sdk",
       "state" : {
-        "revision" : "14918c20ddef93bfaabbb5028e22c212a273c273",
+        "revision" : "c50f3b9afb19dd50cdcae50f3ffe3260e37859a8",
         "version" : "19.0.0"
       }
     },
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/firebase/firebase-ios-sdk",
       "state" : {
-        "revision" : "1c35b9453868cea1ecdf9f112b5b23b8b6343854",
-        "version" : "13.0.1"
+        "revision" : "dc6dfd442b1f3ec215ed62b8beb2623ffab010d6",
+        "version" : "13.1.1"
       }
     },
     {

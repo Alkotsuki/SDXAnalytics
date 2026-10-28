@@ -25,4 +25,26 @@ struct FacebookMappingTests {
         #expect(mapped[AppEvents.ParameterName("i")] as? Int == 3)
         #expect(mapped[AppEvents.ParameterName("d")] as? Double == 1.5)
     }
+
+    @Test func conversionValueReadsNumericValueOnly() {
+        #expect(FacebookParameterMapper.conversionValue(["value": .int(3)]) == 3)
+        #expect(FacebookParameterMapper.conversionValue(["value": .double(1.5)]) == 1.5)
+        #expect(FacebookParameterMapper.conversionValue(["value": .string("x")]) == nil)
+        #expect(FacebookParameterMapper.conversionValue([:]) == nil)
+    }
+
+    @Test func conversionCurrencyBecomesFacebookCurrency() {
+        let mapped = FacebookParameterMapper.conversionParameters(["value": .double(9.99), "currency": .string("USD")])
+        #expect(mapped[.currency] as? String == "USD")
+        #expect(FacebookParameterMapper.conversionParameters(["value": .int(1)])[.currency] == nil)
+    }
+
+    @Test func purchaseCarriesTheKeysTheSDKDeduplicatesOn() {
+        let purchase = SDXAnalyticsPurchase(
+            productID: "pro.monthly", price: 9.99, currencyCode: "USD", transactionID: "t1"
+        )
+        let mapped = FacebookParameterMapper.purchaseParameters(purchase)
+        #expect(mapped[.contentID] as? String == "pro.monthly")
+        #expect(mapped[.transactionID] as? String == "t1")
+    }
 }

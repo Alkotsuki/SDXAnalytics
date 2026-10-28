@@ -30,7 +30,22 @@ public final class SDXFacebookDestination: AnalyticsDestination, @unchecked Send
 
     private let enabled = OSAllocatedUnfairLock(initialState: false)
 
-    public init() {}
+    private let conversionEvents: [String: AppEvents.Name]
+
+    /// - Parameter conversionEvents: SDX event name → Facebook standard (conversion) event, e.g.
+    ///   `["signup_completed": .completedRegistration, "trial_started": .startTrial]`. A mapped event is
+    ///   logged under the standard name so Meta can optimise ads for it, its `value` parameter (if
+    ///   numeric) becomes `valueToSum`, and its `currency` parameter becomes `fb_currency`. Unmapped events
+    ///   keep their own name. Never map to `.purchased`: purchases go through `trackPurchase`, and a
+    ///   second path would count them twice. A free trial is a zero-price purchase that `trackPurchase`
+    ///   skips, so map its event to `.startTrial` to get it into Ads Manager.
+    public init(conversionEvents: [String: AppEvents.Name] = [:]) {
+        precondition(
+            !conversionEvents.values.contains(.purchased),
+            "Log purchases with SDXAnalyticsClient.purchase, not a .purchased conversion event."
+        )
+        self.conversionEvents = conversionEvents
+    }
 
     public func configure() throws {
         // Nothing to do: the app has already started the SDK. Fail loudly if it has not, since events
@@ -53,10 +68,19 @@ public final class SDXFacebookDestination: AnalyticsDestination, @unchecked Send
 
     public func track(_ event: SDXAnalyticsEvent) {
         guard enabled.withLock({ $0 }) else { return }
-        AppEvents.shared.logEvent(
-            AppEvents.Name(event.name),
-            parameters: FacebookParameterMapper.map(event.parameters)
-        )
+        guard let standard = conversionEvents[event.name] else {
+            AppEvents.shared.logEvent(
+                AppEvents.Name(event.name),
+                parameters: FacebookParameterMapper.map(event.parameters)
+            )
+            return
+        }
+        let parameters = FacebookParameterMapper.conversionParameters(event.parameters)
+        if let value = FacebookParameterMapper.conversionValue(event.parameters) {
+            AppEvents.shared.logEvent(standard, valueToSum: value, parameters: parameters)
+        } else {
+            AppEvents.shared.logEvent(standard, parameters: parameters)
+        }
     }
 
     public func setUserID(_ id: String?) {
@@ -69,7 +93,7 @@ public final class SDXFacebookDestination: AnalyticsDestination, @unchecked Send
         AppEvents.shared.logPurchase(
             amount: NSDecimalNumber(decimal: purchase.revenue).doubleValue,
             currency: purchase.currencyCode,
-            parameters: FacebookParameterMapper.map(purchase.parameters)
+            parameters: FacebookParameterMapper.purchaseParameters(purchase)
         )
     }
 
