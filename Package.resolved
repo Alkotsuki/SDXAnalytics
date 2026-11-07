@@ -1,5 +1,5 @@
 {
-  "originHash" : "1e84e7a6f987f32b35ad4bdc8948491943e34b0901b4bb1410669ca3627d8c77",
+  "originHash" : "6a9e1503ba50b6d48bdb4fc31316f13d01e53b3434e1a3cdf2fdb7b873c45e1a",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/amplitude/Amplitude-Swift.git",
       "state" : {
-        "revision" : "48a4b8635008c41b1f9f51b5c9032d5850746289",
-        "version" : "1.19.4"
+        "revision" : "06a4d53ec3c8f07cefd1744ce829398f1b91ce46",
+        "version" : "1.20.0"
       }
     },
     {
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/amplitude/AmplitudeCore-Swift.git",
       "state" : {
-        "revision" : "78083c4fbd276735821025aec8601f06ace01bd1",
-        "version" : "1.5.4"
+        "revision" : "0d978cebcc9fa59831b0484c46f491d405f393b2",
+        "version" : "1.6.1"
       }
     },
     {
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/facebook/facebook-ios-sdk",
       "state" : {
-        "revision" : "c50f3b9afb19dd50cdcae50f3ffe3260e37859a8",
-        "version" : "19.0.0"
+        "revision" : "7c3fb7856063fa1074d330616f4070f2ed10a49b",
+        "version" : "19.0.1"
       }
     },
     {

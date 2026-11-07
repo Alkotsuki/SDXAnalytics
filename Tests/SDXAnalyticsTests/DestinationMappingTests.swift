@@ -49,11 +49,42 @@ struct PurchaseMappingTests {
         #expect(purchase.revenue == Decimal(string: "14.97")!)
     }
 
-    @Test func aZeroPricePurchaseIsFlaggedRatherThanSilentlySwallowed() {
-        // Amplitude's `Revenue.isValid()` requires a non-nil price, so a trial start is dropped there.
-        // `carriesRevenue` is what lets the destination log that instead of losing it.
+    @Test func onlyANonZeroPriceCarriesRevenue() {
+        // The client drops what does not carry revenue — a trial start — before any destination.
         #expect(SDXAnalyticsFixtures.trial.carriesRevenue == false)
         #expect(SDXAnalyticsFixtures.pack.carriesRevenue)
+    }
+
+    @Test func firebasePurchaseCarriesTotalCurrencyTransactionAndItem() throws {
+        let parameters = SDXFirebaseDestination.purchaseParameters(SDXAnalyticsFixtures.pack)
+        let value = try #require(parameters["value"] as? Double)
+        #expect(abs(value - 14.97) < 0.0001)
+        #expect(parameters["currency"] as? String == "USD")
+        #expect(parameters["transaction_id"] as? String == "2000000123456789")
+        let items = try #require(parameters["items"] as? [[String: Any]])
+        #expect(items.count == 1)
+        #expect(items[0]["item_id"] as? String == "com.sdx.Evoke.pack.30")
+        #expect(items[0]["price"] as? Double == 4.99)
+        #expect(items[0]["quantity"] as? Int == 3)
+    }
+
+    @Test func aCustomParameterCannotOverwriteFirebaseRevenueFields() {
+        let purchase = SDXAnalyticsPurchase(
+            productID: "pro.monthly",
+            price: 9.99,
+            currencyCode: "USD",
+            parameters: ["value": 1, "currency": "EUR", "placement": "onboarding"]
+        )
+        let parameters = SDXFirebaseDestination.purchaseParameters(purchase)
+        #expect(parameters["value"] as? Double == 9.99)
+        #expect(parameters["currency"] as? String == "USD")
+        #expect(parameters["placement"] as? String == "onboarding")
+    }
+
+    @Test func amplitudeDeduplicatesOnTheTransaction() {
+        #expect(AmplitudeRevenueMapper.options(SDXAnalyticsFixtures.pack)?.insertId == "revenue-2000000123456789")
+        let untracked = SDXAnalyticsPurchase(productID: "p", price: 1, currencyCode: "USD")
+        #expect(AmplitudeRevenueMapper.options(untracked) == nil)
     }
 }
 

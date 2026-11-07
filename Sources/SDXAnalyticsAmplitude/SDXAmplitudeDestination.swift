@@ -28,7 +28,6 @@
 import Foundation
 import AmplitudeSwift
 import SDXAnalytics
-import os
 
 public struct SDXAmplitudeOptions: Sendable, Hashable {
 
@@ -71,7 +70,6 @@ public final class SDXAmplitudeDestination: AnalyticsDestination, @unchecked Sen
 
     private let options: SDXAmplitudeOptions
     private let plugin = AmplitudeGlobalPropertiesPlugin()
-    private let logger = Logger(subsystem: "SDXAnalytics", category: "amplitude")
     private var amplitude: Amplitude?
 
     public init(options: SDXAmplitudeOptions) {
@@ -122,16 +120,11 @@ public final class SDXAmplitudeDestination: AnalyticsDestination, @unchecked Sen
     }
 
     public func trackPurchase(_ purchase: SDXAnalyticsPurchase) {
-        // `Revenue.isValid()` requires a non-nil price, so Amplitude drops a zero-price purchase — and
-        // a zero-price purchase is exactly what a free-trial start looks like. Log it rather than let a
-        // trial quietly vanish from the funnel; the ordinary event for it still went through `track`.
-        guard purchase.carriesRevenue else {
-            logger.notice(
-                "Amplitude drops zero-price purchases; \(purchase.productID, privacy: .public) was not sent as revenue."
-            )
-            return
-        }
-        amplitude?.revenue(revenue: AmplitudeRevenueMapper.map(purchase))
+        // Zero-price purchases never get here; `SDXAnalyticsClient.purchase` drops them.
+        amplitude?.revenue(
+            revenue: AmplitudeRevenueMapper.map(purchase),
+            options: AmplitudeRevenueMapper.options(purchase)
+        )
     }
 
     public func trackScreen(name screenName: String, class className: String?) {

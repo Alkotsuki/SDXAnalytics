@@ -37,6 +37,14 @@ enum AmplitudeRevenueMapper {
         return revenue
     }
 
+    /// `insert_id` from the transaction, so Amplitude's server-side de-duplication (same device,
+    /// same `insert_id`, within 7 days) drops a second report of one transaction — e.g. the purchase
+    /// result and the `Transaction.updates` replay at next launch. `Revenue` has no transaction field;
+    /// Firebase and Facebook already get theirs.
+    static func options(_ purchase: SDXAnalyticsPurchase) -> EventOptions? {
+        purchase.transactionID.map { EventOptions(insertId: "revenue-\($0)") }
+    }
+
     /// `.bool` becomes `1`/`0` rather than a Swift `Bool`.
     ///
     /// Not because Amplitude cannot carry a boolean — it can — but because Firebase cannot, and the

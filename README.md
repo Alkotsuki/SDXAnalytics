@@ -47,9 +47,12 @@ before any event is sent.
 
 **One purchase type, because the vendors disagree about it.** Amplitude wants the *unit* price and
 multiplies by quantity itself; Firebase wants the *total*. `SDXAnalyticsPurchase.revenue` computes
-that once so the two cannot drift. Note also that Amplitude's `Revenue.isValid()` requires a non-zero
-price, so a free-trial start is dropped there — the destination logs it rather than letting a trial
-vanish from the funnel.
+that once so the two cannot drift. **A zero-price purchase is not revenue and is dropped by
+`SDXAnalyticsClient.purchase`** before any destination sees it: a free-trial start would otherwise be a
+Firebase `purchase` worth 0, an Amplitude revenue event worth 0 and a Facebook `fb_mobile_purchase`.
+Track a trial as an ordinary event (`trial_started`) and, for Facebook, map it to `.startTrial` with
+`SDXFacebookDestination(conversionEvents:)`. Each vendor also gets the transaction id for its own
+de-duplication (Firebase `transaction_id`, Facebook `fb_transaction_id`, Amplitude `insert_id`).
 
 **This package never asks for ATT.** `SDXAdvertisingIdentifier` offers the status, the request and the
 identifier; nothing else in the package calls it. When the prompt appears is a product decision —
@@ -64,7 +67,19 @@ logged drop count. SwiftUI fires the first events from `body` and `.task`, which
 
 **A destination that fails to configure is struck off, not fatal.** `configure()` does not throw. One
 vendor with a bad key must not silence the other, and an app that crashed on a Firebase
-misconfiguration would be trading all of its telemetry for one dashboard.
+misconfiguration would be trading all of its telemetry for one dashboard. But it is not quiet: the failure is
+logged at `.fault` and tracked as `analytics_destination_failed` (`destination`, `reason`) to every
+destination that did come up, so a dead vendor shows on the dashboards that are alive.
+
+**The Facebook destination starts the Facebook SDK if the app has not.** A SwiftUI `App.init` runs
+before the app delegate's `didFinishLaunching`, and reading Facebook's settings before the SDK starts
+caches an empty app ID for the whole process. `SDXFacebookDestination.configure()` therefore checks
+whether the SDK has started (via `Settings.shared.clientToken`, which needs `FacebookClientToken` in
+Info.plist and is safe to read early). If it has, `configure()` works on any thread. If it has not,
+`configure()` calls `ApplicationDelegate.shared.initializeSDK()` on the main thread, or fails loudly
+when run off it. Starting the SDK on the main thread *before* `configure()` is still preferred: when the destination gets there first, the
+delegate's own `didFinishLaunching` call becomes a no-op and deep-link launch options are lost. See the
+header of `SDXFacebookDestination.swift`.
 
 ## Use
 

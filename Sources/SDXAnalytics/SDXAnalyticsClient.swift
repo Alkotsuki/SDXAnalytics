@@ -76,9 +76,15 @@ public final class SDXAnalyticsClient: Sendable {
     /// both are, and because the natural call site is an `App.init` — making this `async` would push
     /// it into a `.task`, which runs after the first `body`, which is after the first events.
     ///
-    /// Does not throw. A destination that fails is logged and struck off the fan-out for the lifetime
-    /// of the process; there is no useful single answer to hand back, and an app that crashed on a
-    /// Firebase misconfiguration would be trading all of its telemetry for one dashboard.
+    /// Does not throw. A destination that fails is struck off the fan-out for the lifetime of the
+    /// process; there is no useful single answer to hand back, and an app that crashed on a Firebase
+    /// misconfiguration would be trading all of its telemetry for one dashboard.
+    ///
+    /// But it is never quiet about it. The failure is logged at `.fault`, and — because release builds
+    /// are the only builds that usually carry vendor destinations, and nobody reads a release device's
+    /// log — it is also tracked as `destinationFailedEvent` to every destination that did come up, so a
+    /// dead vendor shows up on the dashboards that are still alive. A Facebook destination that failed
+    /// this way went unnoticed for two App Store releases.
     public func configure() {
         let alreadyConfigured = state.withLock { $0.isConfigured }
         guard !alreadyConfigured else { return }
@@ -86,14 +92,16 @@ public final class SDXAnalyticsClient: Sendable {
         let storedEnabled = defaults.object(forKey: configuration.persistedEnabledKey) as? Bool
         let isEnabled = storedEnabled ?? configuration.enabledByDefault
 
+        var failures: [(name: String, reason: String)] = []
         let live = destinations.filter { destination in
             do {
                 try destination.configure()
                 return true
             } catch {
-                logger.error(
+                logger.fault(
                     "Destination \(destination.name, privacy: .public) failed to configure: \(error.localizedDescription, privacy: .public)"
                 )
+                failures.append((destination.name, error.localizedDescription))
                 return false
             }
         }
@@ -145,7 +153,20 @@ public final class SDXAnalyticsClient: Sendable {
                 for destination in live { destination.trackScreen(name: name, class: className) }
             }
         }
+
+        for failure in failures {
+            track(
+                Self.destinationFailedEvent,
+                // Trimmed here rather than by the validator so a long error message never trips the
+                // DEBUG diagnostics assert on the way to reporting a different problem.
+                ["destination": .string(failure.name), "reason": .string(String(failure.reason.prefix(100)))]
+            )
+        }
     }
+
+    /// Tracked once per destination whose `configure()` threw, with `destination` and `reason`
+    /// parameters, to the destinations that did come up.
+    public static let destinationFailedEvent = "analytics_destination_failed"
 
     public var isConfigured: Bool {
         state.withLock { $0.isConfigured }
@@ -200,7 +221,16 @@ public final class SDXAnalyticsClient: Sendable {
         }
     }
 
+    /// Report revenue. A purchase that does not `carriesRevenue` — a free-trial start — is dropped here,
+    /// before any destination sees it; see `SDXAnalyticsPurchase` for why. Track the trial as an
+    /// ordinary event instead.
     public func purchase(_ purchase: SDXAnalyticsPurchase) {
+        guard purchase.carriesRevenue else {
+            logger.notice(
+                "Zero-price purchase of \(purchase.productID, privacy: .public) is not revenue; not sent. Track the trial as an event."
+            )
+            return
+        }
         let decision = state.withLock { state -> ([any AnalyticsDestination], Bool) in
             guard state.isEnabled else { return ([], false) }
             guard state.isConfigured else {

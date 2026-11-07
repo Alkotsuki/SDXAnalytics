@@ -51,7 +51,35 @@ struct FanOutTests {
         client.track(SDXAnalyticsFixtures.valid)
 
         #expect(broken.events.isEmpty)
-        #expect(working.events.count == 1)
+        #expect(working.count(of: SDXAnalyticsFixtures.valid.name) == 1)
+    }
+
+    @Test func aDestinationThatFailsToConfigureIsReportedToTheSurvivors() throws {
+        // The failure has to reach a dashboard: release builds are the only ones carrying vendor
+        // destinations, and nobody reads a release device's log.
+        let broken = FakeAnalyticsDestination(
+            name: "broken",
+            configureError: SDXAnalyticsError.missingAPIKey("broken")
+        )
+        let working = FakeAnalyticsDestination(name: "working")
+        let client = SDXAnalyticsFixtures.client(destinations: [broken, working])
+        client.configure()
+
+        let event = try #require(working.event(named: SDXAnalyticsClient.destinationFailedEvent))
+        #expect(event.parameters["destination"] == .string("broken"))
+        #expect(event.parameters["reason"] == .string("broken was created without an API key."))
+    }
+
+    @Test func aFailedDestinationIsNotReportedForAUserWhoOptedOut() {
+        let broken = FakeAnalyticsDestination(
+            name: "broken",
+            configureError: SDXAnalyticsError.missingAPIKey("broken")
+        )
+        let working = FakeAnalyticsDestination(name: "working")
+        let client = SDXAnalyticsFixtures.client(destinations: [broken, working], enabledByDefault: false)
+        client.configure()
+
+        #expect(working.events.isEmpty)
     }
 
     @Test func configureIsIdempotent() {
@@ -99,6 +127,28 @@ struct FanOutTests {
         #expect(destination.events.isEmpty)
         #expect(destination.screenNames == ["library"])
         #expect(destination.purchases.count == 1)
+    }
+
+    @Test func aZeroPricePurchaseReachesNoDestination() {
+        // A free-trial start. Every vendor would otherwise count it as a sale worth 0.
+        let destination = FakeAnalyticsDestination()
+        let client = SDXAnalyticsFixtures.client(destinations: [destination])
+        client.configure()
+
+        client.purchase(SDXAnalyticsFixtures.trial)
+
+        #expect(destination.purchases.isEmpty)
+    }
+
+    @Test func aZeroPricePurchaseIsNotBufferedBeforeConfigureEither() {
+        let destination = FakeAnalyticsDestination()
+        let client = SDXAnalyticsFixtures.client(destinations: [destination])
+
+        client.purchase(SDXAnalyticsFixtures.trial)
+        client.purchase(SDXAnalyticsFixtures.pack)
+        client.configure()
+
+        #expect(destination.purchases == [SDXAnalyticsFixtures.pack])
     }
 
     @Test func flushAndResetReachEveryDestination() {

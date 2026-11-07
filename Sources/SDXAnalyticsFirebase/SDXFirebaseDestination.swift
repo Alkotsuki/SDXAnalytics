@@ -129,29 +129,30 @@ public final class SDXFirebaseDestination: AnalyticsDestination, @unchecked Send
     }
 
     public func trackPurchase(_ purchase: SDXAnalyticsPurchase) {
-        // `AnalyticsParameterValue` is the **total**. Amplitude wants the unit price and multiplies
-        // itself; `SDXAnalyticsPurchase.revenue` exists so the two cannot drift apart.
-        var parameters: [String: Any] = [
-            AnalyticsParameterValue: NSDecimalNumber(decimal: purchase.revenue).doubleValue,
-            AnalyticsParameterCurrency: purchase.currencyCode,
-            AnalyticsParameterItems: [
-                [
-                    AnalyticsParameterItemID: purchase.productID,
-                    AnalyticsParameterPrice: NSDecimalNumber(decimal: purchase.price).doubleValue,
-                    AnalyticsParameterQuantity: purchase.quantity,
-                ]
-            ],
-        ]
+        // Zero-price purchases never get here; `SDXAnalyticsClient.purchase` drops them.
+        Analytics.logEvent(AnalyticsEventPurchase, parameters: Self.purchaseParameters(purchase))
+    }
 
+    /// `AnalyticsParameterValue` is the **total**. Amplitude wants the unit price and multiplies
+    /// itself; `SDXAnalyticsPurchase.revenue` exists so the two cannot drift apart.
+    ///
+    /// The purchase's own `parameters` go in first, so a custom `value`, `currency` or `items` can never
+    /// overwrite the standard ones Firebase's revenue reports read.
+    static func purchaseParameters(_ purchase: SDXAnalyticsPurchase) -> [String: Any] {
+        var parameters = FirebaseParameterMapper.map(purchase.parameters)
+        parameters[AnalyticsParameterValue] = NSDecimalNumber(decimal: purchase.revenue).doubleValue
+        parameters[AnalyticsParameterCurrency] = purchase.currencyCode
+        parameters[AnalyticsParameterItems] = [
+            [
+                AnalyticsParameterItemID: purchase.productID,
+                AnalyticsParameterPrice: NSDecimalNumber(decimal: purchase.price).doubleValue,
+                AnalyticsParameterQuantity: purchase.quantity,
+            ]
+        ]
         if let transactionID = purchase.transactionID {
             parameters[AnalyticsParameterTransactionID] = transactionID
         }
-
-        for (key, value) in FirebaseParameterMapper.map(purchase.parameters) {
-            parameters[key] = value
-        }
-
-        Analytics.logEvent(AnalyticsEventPurchase, parameters: parameters)
+        return parameters
     }
 
     public func trackScreen(name screenName: String, class className: String?) {

@@ -14,9 +14,9 @@ let package = Package(
         .library(name: "SDXAnalyticsFacebook", targets: ["SDXAnalyticsFacebook"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "13.0.0"),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "13.1.0"),
         .package(url: "https://github.com/facebook/facebook-ios-sdk", from: "19.0.0"),
-        .package(url: "https://github.com/amplitude/Amplitude-Swift.git", from: "1.19.0"),
+        .package(url: "https://github.com/amplitude/Amplitude-Swift.git", from: "1.20.0"),
     ],
     targets: [
         .target(name: "SDXAnalytics"),

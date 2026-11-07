@@ -54,6 +54,7 @@ enum FacebookParameterMapper {
     static func purchaseParameters(_ purchase: SDXAnalyticsPurchase) -> [AppEvents.ParameterName: Any] {
         var parameters = map(purchase.parameters)
         parameters[.contentID] = purchase.productID
+        parameters[.numItems] = purchase.quantity
         if let transactionID = purchase.transactionID {
             parameters[.transactionID] = transactionID
         }

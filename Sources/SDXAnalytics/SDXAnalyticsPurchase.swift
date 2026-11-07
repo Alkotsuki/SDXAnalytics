@@ -60,11 +60,19 @@ public struct SDXAnalyticsPurchase: Sendable, Hashable {
         price * Decimal(quantity)
     }
 
-    /// Whether a vendor that requires a non-zero price will accept this.
+    /// Whether this is revenue at all. **`SDXAnalyticsClient.purchase` drops anything that is not**,
+    /// before it reaches any destination.
     ///
-    /// Amplitude's `Revenue.isValid()` refuses a nil price, so a zero-price purchase — which is
-    /// what a free-trial start looks like — is dropped there. Exposed so the mapping can log the
-    /// drop rather than letting a trial silently vanish from the funnel.
+    /// A zero-price purchase is what a free-trial start looks like, and every vendor would count it
+    /// as a sale: Firebase as a `purchase` worth 0 (inflating purchase counts and conversion rate),
+    /// Amplitude as a `revenue_amount` with `$price` 0 (its `Revenue.isValid()` only rejects a *nil*
+    /// price), Facebook as an `fb_mobile_purchase` that Ads Manager optimises towards. So the rule is
+    /// applied once, in the client, rather than remembered in each destination. A trial belongs in
+    /// an ordinary event (`trial_started`), which Facebook can map to `.startTrial` via
+    /// `SDXFacebookDestination(conversionEvents:)`.
+    ///
+    /// Negative prices pass: Amplitude treats negative revenue as a refund. Nothing in the apps sends
+    /// one today.
     public var carriesRevenue: Bool {
         price != .zero
     }

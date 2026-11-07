@@ -46,5 +46,36 @@ struct FacebookMappingTests {
         let mapped = FacebookParameterMapper.purchaseParameters(purchase)
         #expect(mapped[.contentID] as? String == "pro.monthly")
         #expect(mapped[.transactionID] as? String == "t1")
+        #expect(mapped[.numItems] as? Int == 1)
+    }
+
+    @Test func configuringOffTheMainThreadBeforeTheAppStartedTheSDKFails() async {
+        // Starting the SDK touches `UIApplication`; off main the destination must refuse, and the
+        // client then reports the failure, rather than start it from the wrong thread.
+        let destination = SDXFacebookDestination(conversionEvents: [:], isSDKStarted: { false })
+        #expect(await Self.configureOffMain(destination) == .destinationFailed(SDXFacebookDestination.notStartedOffMain))
+    }
+
+    @Test func configuringOffTheMainThreadAfterTheAppStartedTheSDKPassesTheThreadCheck() async {
+        // How both apps run: SDK started on main in `App.init`, `client.configure()` on a utility queue.
+        // The test host has no started SDK, so the app-ID read that follows fails — but with
+        // `missingAPIKey`, which proves the thread check let it through.
+        let destination = SDXFacebookDestination(conversionEvents: [:], isSDKStarted: { true })
+        #expect(await Self.configureOffMain(destination) == .missingAPIKey("facebook"))
+    }
+
+    private static func configureOffMain(_ destination: SDXFacebookDestination) async -> SDXAnalyticsError? {
+        await withCheckedContinuation { continuation in
+            // A plain background queue, like the apps' analytics queue.
+            DispatchQueue.global(qos: .utility).async {
+                precondition(!Thread.isMainThread)
+                do {
+                    try destination.configure()
+                    continuation.resume(returning: nil)
+                } catch {
+                    continuation.resume(returning: error as? SDXAnalyticsError)
+                }
+            }
+        }
     }
 }
